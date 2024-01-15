@@ -1,26 +1,97 @@
-import React, { Component } from 'react';
+import { useEffect, useState } from "react";
 
-export class Home extends Component {
-  static displayName = Home.name;
+export default function Home() {
 
-  render() {
+    const [students, setStudents] = useState([]);
+    const [sid, setSid] = useState("");
+
+    const handleModal = (hide) => {
+        const deleteModal = document.querySelector(".delete-modal");
+        if (deleteModal) {
+            if (hide) {
+                deleteModal.classList.add("hidden");
+            } else {
+                deleteModal.classList.remove("hidden");
+            }
+
+        }
+    };
+
+    const openDeleteModal = (id) => {
+        setSid(id);
+        handleModal(false);
+    };
+    const deleteStudent = () => {
+        // console.log( "The Student ID: ", sid );
+        // return;
+        fetch("api/student/" + sid, {
+            method: "DELETE",
+        }).then(r => {
+            console.log("Response for deleting a student: ", r);
+            handleModal(true);
+            window.location.reload();
+
+        }).catch(e => console.log("Error deleting a student: ", e));
+    };
+
+    useEffect(() => {
+        fetch("api/student").then(r => r.json()).then(d => {
+            console.log("The students are: ", d);
+            setStudents(d);
+        }).catch(e => console.log("The error fetching all students: ", e));
+    }, []);
     return (
-      <div>
-        <h1>Hello, world!</h1>
-        <p>Welcome to your new single-page application, built with:</p>
-        <ul>
-          <li><a href='https://get.asp.net/'>ASP.NET Core</a> and <a href='https://msdn.microsoft.com/en-us/library/67ef8sbd.aspx'>C#</a> for cross-platform server-side code</li>
-          <li><a href='https://facebook.github.io/react/'>React</a> for client-side code</li>
-          <li><a href='http://getbootstrap.com/'>Bootstrap</a> for layout and styling</li>
-        </ul>
-        <p>To help you get started, we have also set up:</p>
-        <ul>
-          <li><strong>Client-side navigation</strong>. For example, click <em>Counter</em> then <em>Back</em> to return here.</li>
-          <li><strong>Development server integration</strong>. In development mode, the development server from <code>create-react-app</code> runs in the background automatically, so your client-side resources are dynamically built on demand and the page refreshes when you modify any file.</li>
-          <li><strong>Efficient production builds</strong>. In production mode, development-time features are disabled, and your <code>dotnet publish</code> configuration produces minified, efficiently bundled JavaScript files.</li>
-        </ul>
-        <p>The <code>ClientApp</code> subdirectory is a standard React application based on the <code>create-react-app</code> template. If you open a command prompt in that directory, you can run <code>npm</code> commands such as <code>npm test</code> or <code>npm install</code>.</p>
-      </div>
+        <main>
+            <h1>Student Manager Application</h1>
+            <div className="add-btn">
+                <a href="/new">+</a>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>First Name</th>
+                        <th>Last Name</th>
+                        <th>Class Name</th>
+                        <th>Department</th>
+                        <th>Gender</th>
+                        <th>Birthday</th>
+                        <th>Graduated</th>
+                        <th>Age</th>
+                        <th>Edit</th>
+                        <th>Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {
+                        students.length === 0 ? <tr className="row waiting"><td className="row">Loading<span className="loading">...</span></td></tr> :
+                            students.map(student => <tr key={student.id}>
+                                <td>{student.firstName}</td>
+                                <td>{student.lastName}</td>
+                                <td>{student.className}</td>
+                                <td>{student.department}</td>
+                                <td>{student.gender === 0 ? "Female" : "Male"}</td>
+                                <td>{student.dateOfBirth.split("T")[0]}</td>
+                                <td>{student.isGraduated ? "Yes" : "No"}</td>
+                                <td>{student.age}</td>
+                                <td><a href={"/edit?id=" + student.id}>Edit</a></td>
+                                <td onClick={() => { openDeleteModal(student.id); }}>Delete</td>
+                            </tr>)
+                    }
+                </tbody>
+            </table>
+
+            <section className="delete-modal hidden">
+                <div className="modal-item">
+                    <h3>Delete Student</h3>
+                    <p>Are you sure you want to delete this student?</p>
+                    <div className="row mt-20 justify-btw">
+                        <div className="btn cancel" onClick={() => { handleModal(true); }}>Cancel</div>
+                        <div className="btn add" onClick={deleteStudent}>Delete</div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
     );
-  }
 }

@@ -1,6 +1,13 @@
+using Web_App_Mongo.Data;
+using Web_App_Mongo.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.Configure<DatabaseSettings>(
+    builder.Configuration.GetSection("ConnectionStrings"));
+
+builder.Services.AddSingleton<StudentServices>();
 
 builder.Services.AddControllersWithViews();
 

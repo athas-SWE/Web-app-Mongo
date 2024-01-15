@@ -1,43 +1,76 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Web_App_Mongo.Models;
+using Web_App_Mongo.Services;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace Web_App_Mongo.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/student")]
     [ApiController]
     public class StudentController : ControllerBase
     {
-        // GET: api/<StudentController>
+        private readonly StudentServices _studentServices;
+
+        public StudentController(StudentServices studentServices)
+        {
+            _studentServices = studentServices;
+        }
+        // GET: api/student
         [HttpGet]
-        public IEnumerable<string> Get()
+        public async Task<List<Student>> Get() => await _studentServices.GetAsync();
+
+        // GET api/student/64a51019c925955cfda51194
+        [HttpGet("{id:length(24)}")]
+        public async Task<ActionResult<Student>> Get(string id)
         {
-            return new string[] { "value1", "value2" };
+            Student student = await _studentServices.GetAsync(id);
+            if (student == null)
+            {
+                return NotFound();
+            }
+
+            return student;
         }
 
-        // GET api/<StudentController>/5
-        [HttpGet("{id}")]
-        public string Get(int id)
-        {
-            return "value";
-        }
-
-        // POST api/<StudentController>
+        // POST api/student
         [HttpPost]
-        public void Post([FromBody] string value)
+        public async Task<ActionResult<Student>> Post(Student newStudent)
         {
+            await _studentServices.CreateAsync(newStudent);
+            return CreatedAtAction(nameof(Get), new { id = newStudent.Id }, newStudent);
         }
 
-        // PUT api/<StudentController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        // PUT api/student/64a51019c925955cfda51194
+        [HttpPut("{id:length(24)}")]
+        public async Task<ActionResult> Put(string id, Student updateStudent)
         {
+            Student student = await _studentServices.GetAsync(id);
+            if (student == null)
+            {
+                return NotFound("There is no student with this id: " + id);
+            }
+
+            updateStudent.Id = student.Id;
+
+            await _studentServices.UpdateAsync(id, updateStudent);
+
+            return Ok("Updated Successfully");
         }
 
-        // DELETE api/<StudentController>/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
+        // DELETE api/student/64a51019c925955cfda51194
+        [HttpDelete("{id:length(24)}")]
+        public async Task<ActionResult> Delete(string id)
         {
+            Student student = await _studentServices.GetAsync(id);
+            if (student == null)
+            {
+                return NotFound("There is no student with this id: " + id);
+            }
+
+            await _studentServices.RemoveAsync(id);
+
+            return Ok("Deleted Successfully");
         }
     }
 }
